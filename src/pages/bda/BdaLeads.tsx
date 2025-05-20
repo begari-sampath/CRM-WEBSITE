@@ -42,9 +42,14 @@ const BdaLeads = () => {
   const updateLead = (updatedLead: Lead, moveToBottom: boolean = false) => {
     // Update the lead with the current timestamp
     const now = new Date();
+    const formattedNow = format(now, 'yyyy-MM-dd\'T\'HH:mm:ss');
     const leadWithTimestamp = {
       ...updatedLead,
-      updatedAt: format(now, 'yyyy-MM-dd\'T\'HH:mm:ss')
+      updatedAt: formattedNow,
+      // Add special properties for leads that should be at the bottom
+      pinToBottom: moveToBottom ? true : updatedLead.pinToBottom,
+      // Add pinnedAt timestamp when moving to bottom
+      pinnedAt: moveToBottom ? formattedNow : updatedLead.pinnedAt
     };
     
     // Update the leads array
@@ -73,6 +78,23 @@ const BdaLeads = () => {
     const leadToMove = leads.find(lead => lead.id === leadId);
     if (leadToMove) {
       updateLead(leadToMove, true);
+      
+      // Use setTimeout to allow the DOM to update before scrolling
+      setTimeout(() => {
+        // Get the main container and scroll to the bottom of the page
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: 'smooth'
+        });
+        
+        // Also scroll any table containers to the bottom
+        const tableContainers = document.querySelectorAll('.overflow-y-auto, .overflow-x-auto');
+        tableContainers.forEach(container => {
+          if (container instanceof HTMLElement) {
+            container.scrollTop = container.scrollHeight;
+          }
+        });
+      }, 100);
     }
   };
   
@@ -92,6 +114,18 @@ const BdaLeads = () => {
       return matchesSearch && matchesStatus && matchesTemperature;
     })
     .sort((a, b) => {
+      // If either lead is pinned to bottom, prioritize that in sorting
+      if (a.pinToBottom && !b.pinToBottom) {
+        return 1; // a goes after b (toward bottom)
+      } else if (!a.pinToBottom && b.pinToBottom) {
+        return -1; // a goes before b (toward top)
+      } else if (a.pinToBottom && b.pinToBottom) {
+        // Sort by pinnedAt time (most recently moved to bottom goes to the very bottom)
+        // This way each new lead moved goes below the previously moved ones
+        return new Date(a.pinnedAt || '').getTime() - new Date(b.pinnedAt || '').getTime();
+      }
+      
+      // Normal sorting for unpinned leads
       let valueA = a[sortBy];
       let valueB = b[sortBy];
       

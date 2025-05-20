@@ -43,6 +43,8 @@ export interface Lead {
   sampleWorkSent: boolean;
   createdAt: string;
   updatedAt: string;
+  pinToBottom?: boolean; // Flag to indicate if a lead should be displayed at the bottom of the list
+  pinnedAt?: string; // Timestamp when the lead was moved to bottom
 }
 
 export interface LeadFormData {
