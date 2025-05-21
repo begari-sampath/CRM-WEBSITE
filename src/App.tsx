@@ -1,6 +1,6 @@
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import AppRoutes from './routes/AppRoutes';
+import Routes from './routes/AppRoutes';
 import { AuthProvider } from './contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { useEffect } from 'react';
@@ -47,7 +47,7 @@ function App() {
           transition={{ duration: 0.5 }}
           className="min-h-screen bg-gradient-to-br from-gray-50 to-white"
         >
-          <AppRoutes />
+          <Routes />
         </motion.div>
       </Router>
     </AuthProvider>

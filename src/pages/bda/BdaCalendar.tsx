@@ -3,7 +3,7 @@ import { DayPicker } from 'react-day-picker';
 import { format, isToday, isSameDay, isSameMonth, isBefore, parseISO } from 'date-fns';
 import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { generateCalendarEvents, mockLeads } from '../../data/mockData';
-import LeadModal from '../../components/leads/LeadModal';
+import LeadModal from '../../components/leads/LeadModal.fixed';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import 'react-day-picker/dist/style.css';

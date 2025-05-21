@@ -14,7 +14,7 @@ import { Lead, LeadStatus } from '../../types';
 import { format, isToday, isBefore } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
-import LeadModal from '../../components/leads/LeadModal';
+import LeadModal from '../../components/leads/LeadModal.fixed';
 
 const BdaLeads = () => {
   const { user } = useAuth();

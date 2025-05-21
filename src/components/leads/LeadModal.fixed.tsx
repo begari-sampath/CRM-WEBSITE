@@ -2,6 +2,8 @@ import { useState, Fragment, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { X, Thermometer, ClipboardCheck, Calendar, CheckSquare as SquareCheck } from 'lucide-react';
 import { Lead, LeadFormData, LeadInterest, LeadStatus } from '../../types';
+import { supabase } from '../../supabase/supabaseClient'
+import { toast } from 'react-hot-toast';
 
 interface LeadModalProps {
   isOpen: boolean;
@@ -53,7 +55,7 @@ const LeadModal = ({ isOpen, onClose, lead, onSave, readOnly = false }: LeadModa
     }
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     const updatedLead: Lead = {
       ...lead,
       ...formData,
@@ -61,6 +63,17 @@ const LeadModal = ({ isOpen, onClose, lead, onSave, readOnly = false }: LeadModa
     };
     
     onSave(updatedLead);
+    
+    // Update lead in Supabase
+    const { error } = await supabase
+      .from('leads')
+      .update(updatedLead)
+      .eq('id', lead.id);
+    
+    if (error) {
+      console.error('Error updating lead in Supabase:', error);
+      toast.error('Failed to update lead');
+    }
   };
   
   return (

@@ -1,34 +1,50 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import { supabase } from '../../supabase/supabaseClient';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast.error('Please enter both email and password');
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
-      const success = await login(email, password);
-      
-      if (success) {
-        // Redirect based on role
-        navigate(isAdmin ? '/admin/dashboard' : '/bda/dashboard');
-      } else {
-        toast.error('Invalid email or password');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error || !data.user) {
+        toast.error(error?.message || 'Invalid email or password');
+        return;
       }
+
+      // ✅ Optional: Check user role from profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles') // replace with your table name
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        toast.error('Unable to fetch user role');
+        return;
+      }
+
+      const isAdmin = profile.role === 'admin';
+
+      navigate(isAdmin ? '/admin/dashboard' : '/bda/dashboard');
     } catch (error) {
       toast.error('An error occurred during login');
       console.error('Login error:', error);
@@ -87,7 +103,7 @@ const LoginPage = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="flex flex-col space-y-2 text-sm text-slate-600">
           <div className="px-3 py-1.5 bg-slate-100 rounded-md">
             <div className="font-medium">Admin:</div>
