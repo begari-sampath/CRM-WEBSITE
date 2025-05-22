@@ -1,7 +1,18 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://pcilacrcfqefymqkztvo.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjaWxhY3JjZnFlZnltcWt6dHZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3NDQwMzcsImV4cCI6MjA2MzMyMDAzN30.oj5SK0u3X69NRi0jv64iBA5_D8FrxR4BM5blp8la6Mc'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
-export default supabase;
+// Ensure environment variables are defined
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Supabase URL and anon key must be defined in .env file as VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    storage: localStorage,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});
