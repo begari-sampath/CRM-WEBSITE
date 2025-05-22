@@ -1,10 +1,11 @@
+import './index.css';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 // Import routing and error boundary
-import AppRoutes from './routes/AppRoutes';
+import AppRoutes from './routes/AppRoutes2';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {

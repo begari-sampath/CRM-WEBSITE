@@ -1,5 +1,5 @@
-import { ReactNode, useState } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   LayoutDashboard, 
@@ -15,11 +15,7 @@ import {
 import { generateCalendarEvents } from '../data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
-
-const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+const DashboardLayout = () => {
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -222,7 +218,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         
         {/* Main content */}
         <main className="p-4 sm:p-6">
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>

@@ -16,17 +16,20 @@ import { CalendarClock, CheckCircle, PhoneCall, FileText, Copy } from 'lucide-re
 import { format, subDays, parseISO } from 'date-fns';
 
 const AdminReports = () => {
+  // Defensive: fallback empty arrays if mockLeads or mockUsers are undefined
+  const safeMockLeads = Array.isArray(mockLeads) ? mockLeads : [];
+  const safeMockUsers = Array.isArray(mockUsers) ? mockUsers : [];
   const [dateRange, setDateRange] = useState<'7days' | '30days' | '90days'>('7days');
   const [selectedBda, setSelectedBda] = useState<string>('all');
   
   // Get BDA performance data
   const bdaPerformance = generateMockBDAPerformance();
-  const bdaUsers = mockUsers.filter(user => user.role === 'bda');
+  const bdaUsers = safeMockUsers.filter(user => user.role === 'bda');
   
   // Filter leads based on selected BDA
   const filteredLeads = selectedBda === 'all' 
-    ? mockLeads 
-    : mockLeads.filter(lead => lead.assignedBdaId === selectedBda);
+    ? safeMockLeads 
+    : safeMockLeads.filter(lead => lead.assignedBdaId === selectedBda);
   
   // Generate daily activity data for the selected date range
   const generateDailyActivityData = () => {
@@ -146,7 +149,7 @@ const AdminReports = () => {
             >
               <option value="all">All BDAs</option>
               {bdaUsers.map((bda) => (
-                <option key={bda.id} value={bda.id}>{bda.name}</option>
+                <option key={bda.id || bda.name} value={bda.id}>{bda.name}</option>
               ))}
             </select>
             
@@ -246,55 +249,59 @@ const AdminReports = () => {
           </div>
           <div className="p-4" style={{ height: '320px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dailyActivityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{ 
-                    borderRadius: '0.375rem',
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Legend verticalAlign="top" height={36} />
-                <Line 
-                  type="monotone" 
-                  dataKey="calls" 
-                  stroke="#3b82f6" 
-                  name="Calls" 
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="followups" 
-                  stroke="#8b5cf6" 
-                  name="Follow-ups" 
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="quotations" 
-                  stroke="#f59e0b" 
-                  name="Quotations" 
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="closedWon" 
-                  stroke="#10b981" 
-                  name="Deals Closed" 
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
+              {dailyActivityData && dailyActivityData.length > 0 ? (
+                <LineChart data={dailyActivityData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{ 
+                      borderRadius: '0.375rem',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Legend verticalAlign="top" height={36} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="calls" 
+                    stroke="#3b82f6" 
+                    name="Calls" 
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="followups" 
+                    stroke="#8b5cf6" 
+                    name="Follow-ups" 
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="quotations" 
+                    stroke="#f59e0b" 
+                    name="Quotations" 
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="closedWon" 
+                    stroke="#10b981" 
+                    name="Deals Closed" 
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-400 text-sm">No activity data</div>
+              )}
             </ResponsiveContainer>
           </div>
         </div>
@@ -306,23 +313,27 @@ const AdminReports = () => {
           </div>
           <div className="p-4" style={{ height: '320px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={bdaPerformance}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="bdaName" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{ 
-                    borderRadius: '0.375rem',
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Legend verticalAlign="top" height={36} />
-                <Bar dataKey="totalLeads" name="Total Leads" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="followupsMade" name="Follow-ups" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="quotationsSent" name="Quotations" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="dealsClosed" name="Deals Closed" fill="#10b981" radius={[4, 4, 0, 0]} />
-              </BarChart>
+              {bdaPerformance && bdaPerformance.length > 0 ? (
+                <BarChart data={bdaPerformance}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="bdaName" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{ 
+                      borderRadius: '0.375rem',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Legend verticalAlign="top" height={36} />
+                  <Bar dataKey="totalLeads" name="Total Leads" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="followupsMade" name="Follow-ups" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="quotationsSent" name="Quotations" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="dealsClosed" name="Deals Closed" fill="#10b981" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-400 text-sm">No BDA performance data</div>
+              )}
             </ResponsiveContainer>
           </div>
         </div>

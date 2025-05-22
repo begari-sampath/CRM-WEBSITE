@@ -6,10 +6,22 @@ import { format, parseISO, isToday } from 'date-fns';
 import { Lead } from '../../types';
 
 const BdaDashboard = () => {
+  console.log('🚀 BdaDashboard: Rendering...');
   const { user } = useAuth();
-  const [metrics, setMetrics] = useState(generateMockDashboardMetrics(user?.id));
-  const [calendarEvents, setCalendarEvents] = useState(generateCalendarEvents(user?.id));
-  
+  console.log('👤 BdaDashboard: Current user', { user });
+
+  const [metrics, setMetrics] = useState(() => {
+    const mockMetrics = generateMockDashboardMetrics(user?.id);
+    console.log('📊 BdaDashboard: Generated mock metrics', mockMetrics);
+    return mockMetrics;
+  });
+
+  const [calendarEvents, setCalendarEvents] = useState(() => {
+    const events = generateCalendarEvents(user?.id);
+    console.log('📅 BdaDashboard: Generated calendar events', events);
+    return events;
+  });
+
   // Store leads in state so we can update them
   const [leads, setLeads] = useState(() => {
     // Filter leads assigned to current BDA

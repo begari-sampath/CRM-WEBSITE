@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format, parseISO } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../../supabase/supabaseClient';
@@ -34,6 +34,8 @@ const BdaLeads = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const leadsSubscriptionRef = useRef<any>(null);
 
   // Fetch current user's ID
   const fetchCurrentUser = async () => {
@@ -42,30 +44,73 @@ const BdaLeads = () => {
   };
 
   // Fetch leads assigned to the current BDA
+  const fetchLeads = async (bdaId?: string) => {
+    const id = bdaId || userId;
+    if (!id) {
+      toast.error('User not authenticated');
+      return;
+    }
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('assignedTo', id);
+    if (error) {
+      console.error('Error fetching leads:', error);
+      toast.error('Failed to load leads');
+      return;
+    }
+    setLeads(data || []);
+  };
+
+  // Initialize userId and leads
   useEffect(() => {
-    const fetchLeads = async () => {
-      const userId = await fetchCurrentUser();
-      if (!userId) {
-        toast.error('User not authenticated');
-        return;
+    const init = async () => {
+      const id = await fetchCurrentUser();
+      setUserId(id || null);
+      if (id) {
+        fetchLeads(id);
       }
-
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('assignedTo', userId);
-
-      if (error) {
-        console.error('Error fetching leads:', error);
-        toast.error('Failed to load leads');
-        return;
-      }
-
-      setLeads(data || []);
     };
-
-    fetchLeads();
+    init();
   }, []);
+
+  // Real-time subscription for lead assignments
+  useEffect(() => {
+    if (!userId) return;
+    // Clean up previous subscription
+    if (leadsSubscriptionRef.current) {
+      leadsSubscriptionRef.current.unsubscribe();
+      leadsSubscriptionRef.current = null;
+    }
+    const subscription = supabase
+      .channel('leads-assignment-bda-' + userId)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leads',
+          filter: `assignedTo=eq.${userId}`,
+        },
+        () => {
+          // Re-fetch leads on any insert/update/delete for this BDA
+          fetchLeads(userId);
+        }
+      )
+      .subscribe();
+    leadsSubscriptionRef.current = subscription;
+    return () => {
+      if (leadsSubscriptionRef.current) {
+        leadsSubscriptionRef.current.unsubscribe();
+        leadsSubscriptionRef.current = null;
+      }
+    };
+  }, [userId]);
+
+  // Manual refresh handler
+  const handleRefresh = () => {
+    fetchLeads();
+  };
 
   const handleOpenLeadModal = (lead: Lead) => {
     setSelectedLead(lead);
@@ -114,7 +159,16 @@ const BdaLeads = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-slate-800">My Leads</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-slate-800">My Leads</h1>
+        <button
+          onClick={handleRefresh}
+          className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium shadow-sm"
+          title="Refresh leads"
+        >
+          Refresh
+        </button>
+      </div>
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
@@ -214,8 +268,8 @@ const BdaLeads = () => {
             setIsModalOpen(false);
             setSelectedLead(null);
           }}
-          lead={selectedLead}
-          onSave={handleSaveLead}
+          lead={selectedLead as any}
+          onSave={handleSaveLead as any}
           readOnly={true} // BDAs typically have read-only access
         />
       )}
